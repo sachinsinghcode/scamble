@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minesweeper Game</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 60px);
+            gap: 10px;
+        }
+        .tile {
+            width: 60px;
+            height: 60px;
+            background-color: gray;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10%;
+            transition: background-color 0.3s ease;
+        }
+        .red {
+            background-color: red;
+        }
+        .green {
+            background-color: green;
+        }
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: repeat(5, 50px);
+                gap: 8px;
+            }
+            .tile {
+                width: 50px;
+                height: 50px;
+            }
+        }
+        @media (max-width: 480px) {
+            .grid {
+                grid-template-columns: repeat(5, 40px);
+                gap: 6px;
+            }
+            .tile {
+                width: 40px;
+                height: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Scamble</h1>
+    <div class="grid" id="grid"></div>
+
+    <script>
+        const grid = document.getElementById('grid');
+        let winControl = 'random';
+
+        fetch('/get-win-control')
+            .then(response => response.json())
+            .then(data => {
+                winControl = data.control;
+            });
+
+        const tiles = Array.from({ length: 30 }, (_, index) => {
+            const div = document.createElement('div');
+            div.classList.add('tile');
+            div.dataset.index = index;
+            grid.appendChild(div);
+            return div;
+        });
+
+        const revealAllTiles = (index) => {
+            fetch('/reveal-tiles', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ index }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                tiles.forEach((t, i) => {
+                    t.classList.remove('red', 'green');
+                    t.classList.add(data.tiles[i]);
+                });
+            });
+        };
+
+        tiles.forEach(tile => {
+            tile.addEventListener('click', () => {
+                const index = tile.dataset.index;
+                if (tile.classList.contains('red') || tile.classList.contains('green')) return;
+
+                revealAllTiles(index);
+            });
+        });
+    </script>
+</body>
+</html>
